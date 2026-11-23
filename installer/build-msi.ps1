@@ -1,5 +1,7 @@
 # Builds target\release\robopaste.exe and packs it into installer\out\robopaste-<version>.msi.
-# Needs the WiX v4 dotnet tool: dotnet tool install --global wix
+# Needs the WiX v4 dotnet tool and its Util extension:
+#   dotnet tool install --global wix
+#   wix extension add -g WixToolset.Util.wixext
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $wix = Join-Path $env:USERPROFILE '.dotnet\tools\wix.exe'
@@ -17,7 +19,7 @@ try {
 
     Push-Location $PSScriptRoot
     try {
-        & $wix build robopaste.wxs -arch x64 -o $msi
+        & $wix build robopaste.wxs -arch x64 -ext WixToolset.Util.wixext -d "Version=$version" -o $msi
         if ($LASTEXITCODE -ne 0) { throw 'wix build failed' }
     } finally { Pop-Location }
 

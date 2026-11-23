@@ -52,14 +52,20 @@ Tệp chạy nằm ở `target\release\robopaste.exe`. Có thể sao chép tệp
 
 ## Cài bằng MSI
 
-Cần WiX v4 (`dotnet tool install --global wix`).
+Tải `robopaste-<phiên bản>.msi` ở trang [Releases](https://github.com/teexiii/robopaste/releases) rồi chạy. Cài xong là dùng được ngay, không cần thao tác gì thêm:
+
+- cài theo người dùng hiện tại, không cần quyền admin: tệp chạy vào `%LocalAppData%\Programs\robopaste\`, có lối tắt `robopaste` trong Start Menu;
+- tự bật **Start with Windows** (tắt được trong menu khay);
+- tự khởi động ứng dụng khi cài xong;
+- khi nâng cấp hoặc gỡ, bản đang chạy được đóng trước.
+
+Tự build MSI: cần WiX v4 và phần mở rộng Util (`dotnet tool install --global wix`, `wix extension add -g WixToolset.Util.wixext`).
 
 ```
 powershell -ExecutionPolicy Bypass -File installer\build-msi.ps1
-msiexec /i installer\out\robopaste-0.1.0.msi
 ```
 
-MSI cài theo người dùng hiện tại, không cần quyền admin: tệp chạy vào `%LocalAppData%\Programs\robopaste\` và có lối tắt `robopaste` trong Start Menu. Trình cài không tự khởi động ứng dụng và không bật tự chạy cùng Windows.
+Tệp ra ở `installer\out\robopaste-<phiên bản>.msi`.
 
 ## Chạy và tự khởi động
 
@@ -102,4 +108,4 @@ Trong thẻ Explorer nhiều tab, thư mục đích là thư mục của tab đa
 
 ## Gỡ cài đặt
 
-Chọn **Exit** từ menu khay, bỏ chọn **Start with Windows** trước đó (hoặc xóa giá trị `robopaste` trong khóa Run), rồi xóa tệp `robopaste.exe`. Nếu đã cài bằng MSI thì gỡ trong Settings → Apps → Installed apps (mục `robopaste`) sau khi đã **Exit**.
+Chọn **Exit** từ menu khay, bỏ chọn **Start with Windows** trước đó (hoặc xóa giá trị `robopaste` trong khóa Run), rồi xóa tệp `robopaste.exe`. Nếu đã cài bằng MSI thì chỉ cần gỡ trong Settings → Apps → Installed apps (mục `robopaste`): trình gỡ tự đóng ứng dụng và xóa mục tự khởi động.

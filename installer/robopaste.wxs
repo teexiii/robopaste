@@ -2,14 +2,17 @@
 <!--
   Per-user MSI for robopaste (WiX v4). No elevation: installs to
   %LocalAppData%\Programs\robopaste and adds a Start Menu shortcut.
-  It does not start the app and does not enable autostart; "Start with
-  Windows" stays a tray-menu choice.
+  It enables "Start with Windows" (HKCU Run value, the same one the tray
+  menu toggles) and starts the app when setup finishes, so nothing is left
+  for the user to do. A running copy is closed before files are replaced
+  or removed.
   Build: installer\build-msi.ps1
 -->
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
   <Package Name="robopaste"
            Manufacturer="tee"
-           Version="0.1.0"
+           Version="$(var.Version)"
            UpgradeCode="9A4B10D4-6DD8-450C-B6C8-60F3B68DBB13"
            Scope="perUser">
     <MajorUpgrade DowngradeErrorMessage="A newer version of robopaste is already installed." />
@@ -30,6 +33,8 @@
     <Component Id="RobopasteExe" Directory="INSTALLFOLDER" Guid="BBBEA344-1B64-450C-A949-1FB2E9502B50">
       <File Id="RobopasteExeFile" Source="..\target\release\robopaste.exe" />
       <RegistryValue Root="HKCU" Key="Software\robopaste" Name="installed" Type="integer" Value="1" KeyPath="yes" />
+      <!-- Must stay identical to what the tray menu writes: the quoted exe path. -->
+      <RegistryValue Root="HKCU" Key="Software\Microsoft\Windows\CurrentVersion\Run" Name="robopaste" Type="string" Value="&quot;[INSTALLFOLDER]robopaste.exe&quot;" />
       <Shortcut Id="StartMenuShortcut"
                 Directory="ProgramMenuFolder"
                 Name="robopaste"
@@ -39,5 +44,22 @@
       <RemoveFolder Id="RemoveInstallFolder" Directory="INSTALLFOLDER" On="uninstall" />
       <RemoveFolder Id="RemoveProgramsDir" Directory="ProgramsDir" On="uninstall" />
     </Component>
+
+    <!-- The tray app holds its exe open. Ask it to close (WM_CLOSE to its hidden
+         window, so the tray icon is removed cleanly) before InstallValidate looks
+         for files in use; otherwise an upgrade or uninstall stops on a
+         "files in use" prompt. The short ping gives the process time to exit.
+         A console copy/move runner ignores WM_CLOSE and is left alone. -->
+    <SetProperty Id="WixQuietExecCmdLine"
+                 Value="&quot;[SystemFolder]cmd.exe&quot; /c &quot;taskkill /IM robopaste.exe &amp; ping -n 2 127.0.0.1&quot;"
+                 Before="CloseRunningRobopaste" Sequence="execute" />
+    <CustomAction Id="CloseRunningRobopaste" BinaryRef="Wix4UtilCA_X64" DllEntry="WixQuietExec" Execute="immediate" Return="ignore" />
+
+    <!-- Start the tray app when setup finishes (install, upgrade, repair; not uninstall). -->
+    <CustomAction Id="LaunchRobopaste" FileRef="RobopasteExeFile" ExeCommand="" Return="asyncNoWait" />
+    <InstallExecuteSequence>
+      <Custom Action="CloseRunningRobopaste" Before="InstallValidate" />
+      <Custom Action="LaunchRobopaste" After="InstallFinalize" Condition="NOT (REMOVE~=&quot;ALL&quot;)" />
+    </InstallExecuteSequence>
   </Package>
 </Wix>
