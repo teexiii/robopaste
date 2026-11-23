@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Per-user MSI for robopaste (WiX v4). No elevation: installs to
+  %LocalAppData%\Programs\robopaste and adds a Start Menu shortcut.
+  It does not start the app and does not enable autostart; "Start with
+  Windows" stays a tray-menu choice.
+  Build: installer\build-msi.ps1
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="robopaste"
+           Manufacturer="tee"
+           Version="0.1.0"
+           UpgradeCode="9A4B10D4-6DD8-450C-B6C8-60F3B68DBB13"
+           Scope="perUser">
+    <MajorUpgrade DowngradeErrorMessage="A newer version of robopaste is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="ProgramsDir" Name="Programs">
+        <Directory Id="INSTALLFOLDER" Name="robopaste" />
+      </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder" />
+
+    <Feature Id="Main" Title="robopaste">
+      <ComponentRef Id="RobopasteExe" />
+    </Feature>
+
+    <!-- Per-user components need an HKCU registry key path and explicit folder removal. -->
+    <Component Id="RobopasteExe" Directory="INSTALLFOLDER" Guid="BBBEA344-1B64-450C-A949-1FB2E9502B50">
+      <File Id="RobopasteExeFile" Source="..\target\release\robopaste.exe" />
+      <RegistryValue Root="HKCU" Key="Software\robopaste" Name="installed" Type="integer" Value="1" KeyPath="yes" />
+      <Shortcut Id="StartMenuShortcut"
+                Directory="ProgramMenuFolder"
+                Name="robopaste"
+                Description="Ctrl+V folder paste through robocopy"
+                Target="[INSTALLFOLDER]robopaste.exe"
+                WorkingDirectory="INSTALLFOLDER" />
+      <RemoveFolder Id="RemoveInstallFolder" Directory="INSTALLFOLDER" On="uninstall" />
+      <RemoveFolder Id="RemoveProgramsDir" Directory="ProgramsDir" On="uninstall" />
+    </Component>
+  </Package>
+</Wix>

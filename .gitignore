@@ -1,0 +1,6 @@
+/target
+/installer/out/
+*.msi
+*.wixpdb
+plans/
+.claude/
